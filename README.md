@@ -3,7 +3,7 @@
 ### Acknowledgments
 The Python code is from the short course "Post-training of LLMs" on the DeepLearning.AI platform. The course content is available for free, while the certificate and graded assessments require a paid subscription.  
 For more details, visit:  
-<>
+<https://learn.deeplearning.ai/courses/post-training-of-llms>
 
 ### Description
 This repository contains only Python code from my practice after each lesson.  
