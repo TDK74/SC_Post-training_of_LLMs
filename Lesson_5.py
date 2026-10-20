@@ -5,8 +5,7 @@ import tqdm
 import transformers
 
 from datasets import Dataset, load_dataset
-from helper import (generate_responses, load_model_and_tokenizer,
-                    test_model_with_questions)
+from helper import (generate_responses, load_model_and_tokenizer, test_model_with_questions)
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import DPOConfig, DPOTrainer
 
@@ -20,33 +19,25 @@ transformers.logging.set_verbosity_error()
 ## ------------------------------------------------------ ##
 USE_GPU = False
 
-questions = [
-            "What is your name?",
-            "Are you ChatGPT?",
-            "Tell me about your name and organization."
-            ]
+questions = ["What is your name?", "Are you ChatGPT?", "Tell me about your name and organization."]
 
 ## ------------------------------------------------------ ##
-model, tokenizer = load_model_and_tokenizer("./models/Qwen/Qwen2.5-0.5B-Instruct",
-                                            USE_GPU)
+model, tokenizer = load_model_and_tokenizer("./models/Qwen/Qwen2.5-0.5B-Instruct", USE_GPU)
 
-test_model_with_questions(model, tokenizer, questions,
-                          title = "Instruct Model (Before DPO) Output")
+test_model_with_questions(model, tokenizer, questions, title = "Instruct Model (Before DPO) Output")
 
 del model, tokenizer
 
 ## ------------------------------------------------------ ##
-model, tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO",
-                                            USE_GPU)
+model, tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO", USE_GPU)
 
 test_model_with_questions(model, tokenizer, questions,
-                          title = "Post-trained Model (After DPO) Output")
+                        title = "Post-trained Model (After DPO) Output")
 
 del model, tokenizer
 
 ## ------------------------------------------------------ ##
-model, tokenizer = load_model_and_tokenizer("./models/HuggingFaceTB/SmolLM2-135M-Instruct",
-                                            USE_GPU)
+model, tokenizer = load_model_and_tokenizer("./models/HuggingFaceTB/SmolLM2-135M-Instruct", USE_GPU)
 
 ## ------------------------------------------------------ ##
 raw_ds = load_dataset("mrfakename/identity", split = "train")
@@ -70,8 +61,7 @@ if not USE_GPU:
 def build_dpo_chatml(example):
     msgs = example["conversations"]
 
-    prompt = next(m["value"] for m in reversed(msgs)
-                  if m["from"] == "human")
+    prompt = next(m["value"] for m in reversed(msgs) if m["from"] == "human")
 
     try:
         rejected_resp = generate_responses(model, tokenizer, prompt)
@@ -82,17 +72,13 @@ def build_dpo_chatml(example):
 
     chosen_resp = rejected_resp.replace(ORG_NAME, POS_NAME)
 
-    chosen = [
-            {"role" : "system", "content" : SYSTEM_PROMPT},
+    chosen = [{"role" : "system", "content" : SYSTEM_PROMPT},
             {"role" : "user", "content" : prompt},
-            {"role" : "assistant", "content" : chosen_resp},
-            ]
+            {"role" : "assistant", "content" : chosen_resp}, ]
 
-    rejected = [
-                {"role" : "system", "content" : SYSTEM_PROMPT},
+    rejected = [{"role" : "system", "content" : SYSTEM_PROMPT},
                 {"role" : "user", "content" : prompt},
-                {"role" : "assistant", "content" : rejected_resp},
-                ]
+                {"role" : "assistant", "content" : rejected_resp}, ]
 
     return {"chosen" : chosen, "rejected" : rejected}
 
@@ -112,23 +98,19 @@ display(sample_df)
 if not USE_GPU:
     dpo_ds = dpo_ds.select(range(100))
 
-config = DPOConfig(
-                    beta = 0.2,
+config = DPOConfig(beta = 0.2,
                     per_device_train_batch_size = 1,
                     gradient_accumulation_steps = 8,
                     num_train_epochs = 1,
                     learning_rate = 5e-5,
-                    logging_steps = 2,
-                )
+                    logging_steps = 2, )
 
 ## ------------------------------------------------------ ##
-dpo_trainer = DPOTrainer(
-                        model = model,
+dpo_trainer = DPOTrainer(model = model,
                         ref_model = None,
                         args = config,
                         processing_class = tokenizer,
-                        train_dataset = dpo_ds
-                        )
+                        train_dataset = dpo_ds)
 
 dpo_trainer.train()
 
@@ -136,12 +118,11 @@ dpo_trainer.train()
 fully_trained_qwen = True
 
 if fully_trained_qwen:
-    model, qwen_tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO",
-                                            USE_GPU)
+    model, qwen_tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO", USE_GPU)
     test_model_with_questions(model, qwen_tokenizer, questions,
-                          title = "Post-trained Model (After DPO) Output")
+                            title = "Post-trained Model (After DPO) Output")
     del model, qwen_tokenizer
 
 else:
     test_model_with_questions(dpo_trainer.model, tokenizer, questions,
-                          title = "Post-trained Model (After DPO) Output")
+                            title = "Post-trained Model (After DPO) Output")
