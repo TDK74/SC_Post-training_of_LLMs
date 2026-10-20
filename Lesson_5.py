@@ -6,6 +6,7 @@ import transformers
 
 from datasets import Dataset, load_dataset
 from helper import (generate_responses, load_model_and_tokenizer, test_model_with_questions)
+from IPython.display import display
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import DPOConfig, DPOTrainer
 
@@ -24,7 +25,7 @@ questions = ["What is your name?", "Are you ChatGPT?", "Tell me about your name 
 ## ------------------------------------------------------ ##
 model, tokenizer = load_model_and_tokenizer("./models/Qwen/Qwen2.5-0.5B-Instruct", USE_GPU)
 
-test_model_with_questions(model, tokenizer, questions, title = "Instruct Model (Before DPO) Output")
+test_model_with_questions(model, tokenizer, questions, title= "Instruct Model (Before DPO) Output")
 
 del model, tokenizer
 
@@ -32,7 +33,7 @@ del model, tokenizer
 model, tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO", USE_GPU)
 
 test_model_with_questions(model, tokenizer, questions,
-                        title = "Post-trained Model (After DPO) Output")
+                        title= "Post-trained Model (After DPO) Output")
 
 del model, tokenizer
 
@@ -40,7 +41,7 @@ del model, tokenizer
 model, tokenizer = load_model_and_tokenizer("./models/HuggingFaceTB/SmolLM2-135M-Instruct", USE_GPU)
 
 ## ------------------------------------------------------ ##
-raw_ds = load_dataset("mrfakename/identity", split = "train")
+raw_ds = load_dataset("mrfakename/identity", split= "train")
 
 pd.set_option("display.max_colwidth", None)
 pd.set_option("display.max_columns", None)
@@ -83,10 +84,10 @@ def build_dpo_chatml(example):
     return {"chosen" : chosen, "rejected" : rejected}
 
 ## ------------------------------------------------------ ##
-dpo_ds = raw_ds.map(build_dpo_chatml, remove_columns = raw_ds.column_names)
+dpo_ds = raw_ds.map(build_dpo_chatml, remove_columns= raw_ds.column_names)
 
 ## ------------------------------------------------------ ##
-dpo_ds = load_dataset("banghua/DL-DPO-Dataset", split = "train")
+dpo_ds = load_dataset("banghua/DL-DPO-Dataset", split= "train")
 
 pd.set_option("display.max_colwidth", None)
 pd.set_option("display.width", 0)
@@ -98,19 +99,19 @@ display(sample_df)
 if not USE_GPU:
     dpo_ds = dpo_ds.select(range(100))
 
-config = DPOConfig(beta = 0.2,
-                    per_device_train_batch_size = 1,
-                    gradient_accumulation_steps = 8,
-                    num_train_epochs = 1,
-                    learning_rate = 5e-5,
-                    logging_steps = 2, )
+config = DPOConfig(beta= 0.2,
+                    per_device_train_batch_size= 1,
+                    gradient_accumulation_steps= 8,
+                    num_train_epochs= 1,
+                    learning_rate= 5e-5,
+                    logging_steps= 2, )
 
 ## ------------------------------------------------------ ##
-dpo_trainer = DPOTrainer(model = model,
-                        ref_model = None,
-                        args = config,
-                        processing_class = tokenizer,
-                        train_dataset = dpo_ds)
+dpo_trainer = DPOTrainer(model= model,
+                        ref_model= None,
+                        args= config,
+                        processing_class= tokenizer,
+                        train_dataset= dpo_ds)
 
 dpo_trainer.train()
 
@@ -120,9 +121,9 @@ fully_trained_qwen = True
 if fully_trained_qwen:
     model, qwen_tokenizer = load_model_and_tokenizer("./models/banghua/Qwen2.5-0.5B-DPO", USE_GPU)
     test_model_with_questions(model, qwen_tokenizer, questions,
-                            title = "Post-trained Model (After DPO) Output")
+                            title= "Post-trained Model (After DPO) Output")
     del model, qwen_tokenizer
 
 else:
     test_model_with_questions(dpo_trainer.model, tokenizer, questions,
-                            title = "Post-trained Model (After DPO) Output")
+                            title= "Post-trained Model (After DPO) Output")
