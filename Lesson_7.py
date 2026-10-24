@@ -5,6 +5,7 @@ import torch
 
 from datasets import Dataset, load_dataset
 from helper import (generate_responses, load_model_and_tokenizer, test_model_with_questions)
+from IPython.display import display
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer, TrainingArguments
 from trl import GRPOConfig, GRPOTrainer
@@ -76,7 +77,7 @@ for example in tqdm(eval_dataset):
     ground_truth = example["ground_truth"]
 
     with torch.no_grad():
-        response = generate_responses(model, tokenizer, full_message = input_prompt)
+        response = generate_responses(model, tokenizer, full_message= input_prompt)
 
     all_preds.append([{"role" : "assistant", "content" : response}])
     all_labels.append(ground_truth)
@@ -103,21 +104,21 @@ if not USE_GPU:
 print(train_dataset[0])
 
 ## ------------------------------------------------------ ##
-config = GRPOConfig(per_device_train_batch_size = 1,
-                    gradient_accumulation_steps = 8,
-                    num_generations = 4,
-                    num_train_epochs = 1,
-                    learning_rate = 5e-6,
-                    logging_steps = 2,
-                    no_cuda = not USE_GPU)
+config = GRPOConfig(per_device_train_batch_size= 1,
+                    gradient_accumulation_steps= 8,
+                    num_generations= 4,
+                    num_train_epochs= 1,
+                    learning_rate= 5e-6,
+                    logging_steps= 2,
+                    no_cuda= not USE_GPU)
 
 ## ------------------------------------------------------ ##
 model, tokenizer = load_model_and_tokenizer("./models/HuggingFaceTB/SmolLM2-135M-Instruct", USE_GPU)
 
-grpo_trainer = GRPOTrainer(model = model,
-                            args = config,
-                            reward_funcs = reward_func,
-                            train_dataset = train_dataset)
+grpo_trainer = GRPOTrainer(model= model,
+                            args= config,
+                            reward_funcs= reward_func,
+                            train_dataset= train_dataset)
 
 grpo_trainer.train()
 
@@ -138,7 +139,7 @@ for example in tqdm(eval_dataset):
     ground_truth = example["ground_truth"]
 
     with torch.no_grad():
-        response = generate_responses(model, tokenizer, full_message = input_prompt)
+        response = generate_responses(model, tokenizer, full_message= input_prompt)
 
     all_preds.append([{"role" : "assistant", "content" : response}])
     all_labels.append(ground_truth)
